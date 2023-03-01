@@ -11,7 +11,6 @@ import com.otaliastudios.transcoder.strategy.DefaultAudioStrategy
 import com.otaliastudios.transcoder.strategy.DefaultVideoStrategy
 import com.otaliastudios.transcoder.strategy.RemoveTrackStrategy
 import com.otaliastudios.transcoder.strategy.TrackStrategy
-import com.otaliastudios.transcoder.strategy.size.*
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import com.otaliastudios.transcoder.internal.Logger
@@ -87,7 +86,7 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
 
                 val tempDir: String = context.getExternalFilesDir("video_compress")!!.absolutePath
                 val out = SimpleDateFormat("yyyy-MM-dd hh-mm-ss").format(Date())
-                val destPath: String = tempDir + File.separator + "VID_" + out + ".mp4"
+                val destPath: String = tempDir + File.separator + "VID_" + out + path.hashCode() + ".mp4"
 
                 var videoTrackStrategy: TrackStrategy = DefaultVideoStrategy.atMost(340).build();
                 val audioTrackStrategy: TrackStrategy
@@ -113,6 +112,18 @@ class VideoCompressPlugin : MethodCallHandler, FlutterPlugin {
                                 .frameRate(frameRate!!) // will be capped to the input frameRate
                                 .build()
                     }
+                    4 -> {
+                        videoTrackStrategy = DefaultVideoStrategy.atMost(480, 640).build()
+                    }
+                    5 -> {
+                        videoTrackStrategy = DefaultVideoStrategy.atMost(540, 960).build()
+                    }
+                    6 -> {
+                        videoTrackStrategy = DefaultVideoStrategy.atMost(720, 1280).build()
+                    }
+                    7 -> {
+                        videoTrackStrategy = DefaultVideoStrategy.atMost(1080, 1920).build()
+                    }                    
                 }
 
                 audioTrackStrategy = if (includeAudio) {

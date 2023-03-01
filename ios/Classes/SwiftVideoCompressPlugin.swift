@@ -148,6 +148,14 @@ public class SwiftVideoCompressPlugin: NSObject, FlutterPlugin {
             return AVAssetExportPresetMediumQuality
         case 3:
             return AVAssetExportPresetHighestQuality
+        case 4:
+            return AVAssetExportPreset640x480
+        case 5:
+            return AVAssetExportPreset960x540
+        case 6:
+            return AVAssetExportPreset1280x720
+        case 7:
+            return AVAssetExportPreset1920x1080
         default:
             return AVAssetExportPresetMediumQuality
         }
@@ -213,22 +221,17 @@ public class SwiftVideoCompressPlugin: NSObject, FlutterPlugin {
         
         let timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.updateProgress),
                                          userInfo: exporter, repeats: true)
-      NSLog("Exporting starting")
+        
         exporter.exportAsynchronously(completionHandler: {
-            
-             switch exporter.status {
-            case .failed:
-                let description = "\(String(describing: exporter.error))"
-                 NSLog (description);
-            case .cancelled:
-                NSLog("Export canceled")
-            case .completed:
-                NSLog("Successful!")
-            default:
-                NSLog("default case")
+            timer.invalidate()
+            if(self.stopCommand) {
+                self.stopCommand = false
+                var json = self.getMediaInfoJson(path)
+                json["isCancel"] = true
+                let jsonString = Utility.keyValueToJson(json)
+                return result(jsonString)
             }
             if deleteOrigin {
-                timer.invalidate()
                 let fileManager = FileManager.default
                 do {
                     if fileManager.fileExists(atPath: path) {
@@ -241,16 +244,17 @@ public class SwiftVideoCompressPlugin: NSObject, FlutterPlugin {
                     print(error)
                 }
             }
-            var json = self.getMediaInfoJson(compressionUrl.absoluteString)
+            var json = self.getMediaInfoJson(Utility.excludeEncoding(compressionUrl.path))
             json["isCancel"] = false
             let jsonString = Utility.keyValueToJson(json)
             result(jsonString)
-        }) 
+        })
+        self.exporter = exporter
     }
     
     private func cancelCompression(_ result: FlutterResult) {
-        exporter?.cancelExport()
         stopCommand = true
+        exporter?.cancelExport()
         result("")
     }
     
